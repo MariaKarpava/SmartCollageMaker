@@ -32,8 +32,6 @@ from os import listdir
 import json
 
 
-# iterate over files in folder and find dominant colors:
-folder_dir = "/Users/mkarpava/Documents/3_photos"
 
 # 1. iterate over palette photos in a folder_dir: 
     # - save dominant colors of every photo in an array 
@@ -57,35 +55,44 @@ def scan_palette(folder_dir):
 
     return (dominant_colors, file_names)
 
+
+
+
+# 2. save all this info into a file  
+def save_palette_info(dominant_colors, file_names, output_file):
+    imageName_domColor = dict(zip(file_names, dominant_colors))
+
+    with open(output_file, 'w') as convert_file:
+        convert_file.write(json.dumps(imageName_domColor))
+
+
+
+
+
+def load_palette_info(input_file):
+    # 3. reading the data from the file 
+    with open(input_file) as f:
+        data = f.read()
+        
+    # reconstructing the data as a dictionary
+    fromJS_imageName_domColor = json.loads(data) 
+
+    # 4. reconstructing the data into arrays 
+    # TODO: I already have this arrays: dominant_colors, file_names
+    all_names_of_img = [] 
+    all_rgb_of_img = [] 
+
+    for name, rgb in fromJS_imageName_domColor.items(): 
+        all_names_of_img.append(name)
+        all_rgb_of_img.append(rgb)
+    
+    return (all_names_of_img, all_rgb_of_img)
+
+
+folder_dir = "/Users/mkarpava/Documents/3_photos"
 (dominant_colors, file_names) = scan_palette(folder_dir)
-
-
-
-
-# 2. save all this info into a dictionary and then into a file convert.txt      
-imageName_domColor = dict(zip(file_names, dominant_colors))
-
-with open('convert.txt', 'w') as convert_file:
-     convert_file.write(json.dumps(imageName_domColor))
-
-
-
-
-# 3. reading the data from the file 
-with open('convert.txt') as f:
-    data = f.read()
-      
-# reconstructing the data as a dictionary
-fromJS_imageName_domColor = json.loads(data) 
-
-# 4. reconstructing the data into arrays 
-# TODO: I already have this arrays: dominant_colors, file_names
-all_names_of_img = [] 
-all_rgb_of_img = [] 
-
-for name, rgb in fromJS_imageName_domColor.items(): 
-    all_names_of_img.append(name)
-    all_rgb_of_img.append(rgb)
+save_palette_info(dominant_colors, file_names, 'convert.txt')
+(all_names_of_img, all_rgb_of_img) = load_palette_info('convert.txt') 
 
 
 
