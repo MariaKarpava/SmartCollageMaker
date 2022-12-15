@@ -35,6 +35,11 @@ import json
 # iterate over files in folder and find dominant colors:
 folder_dir = "/Users/mkarpava/Documents/3_photos"
 
+# 1. iterate over palette photos in a folder_dir: 
+    # - save dominant colors of every photo in an array 
+    # - save file names for every photo in an array
+        # - indexes in both arrays corresponds to each other
+
 dominant_colors = []
 file_names = []
 
@@ -48,7 +53,9 @@ for image in os.listdir(folder_dir):
         color_thief = ColorThief(path_to_image)
         dominant_color = color_thief.get_color(quality=1)
         dominant_colors.append(dominant_color)
-       
+
+
+# 2. save all this info into a dictionary and then into a file convert.txt      
 imageName_domColor = dict(zip(file_names, dominant_colors))
 
 with open('convert.txt', 'w') as convert_file:
@@ -57,17 +64,15 @@ with open('convert.txt', 'w') as convert_file:
 
 
 
-# reading the data from the file
+# 3. reading the data from the file 
 with open('convert.txt') as f:
     data = f.read()
       
 # reconstructing the data as a dictionary
 fromJS_imageName_domColor = json.loads(data) 
 
-# should return value by key
-# print(fromJS_imageName_domColor['IMG_2747.jpeg'])
-
-# todo: what order do we expect here? (:
+# 4. reconstructing the data into arrays 
+# TODO: I already have this arrays: dominant_colors, file_names
 all_names_of_img = [] 
 all_rgb_of_img = [] 
 
@@ -88,7 +93,7 @@ def closest_color(rgb):
     return min(color_diffs)[1]
 
 
-# Resize and crop an image with PIL:
+# 5. Resize and crop a reference image with PIL:
 # Opens a image in RGB mode
 im = Image.open(r"car.jpeg")
 
@@ -100,9 +105,10 @@ im = im.resize(newsize)
 im.save(r"NewImage.jpeg")
 Image.open(r"NewImage.jpeg")
 
+
 sectors_count = 50 # количество секторов
 
-# find grid coordinates of small squares:
+# 6. find grid coordinates of sectors:
 grid_coordinates = []
 for x in range(0, sectors_count):      
     for y in range(0, sectors_count):        
@@ -116,12 +122,15 @@ img_step = 20 # 1000/50
 print("grid_coordinates")
 print(len(grid_coordinates))
 
-# Create a canvas 
+# 7. Create a canvas 
 canvas = Image.new('RGB', (999, 999), (250,250,250))
 canvas.save(r"canvasImage.jpeg")
 
-all_coordinaes_for_small_square = []
+
+
 for i in grid_coordinates:
+    # 8. count the coordinates where to insert the specific palette photo
+
     coordinate = []
     x = i[0]*img_step
     y = i[1]*img_step
@@ -138,32 +147,29 @@ for i in grid_coordinates:
     right = coordinate[2]
     bottom = coordinate[3]
 
-    all_coordinaes_for_small_square.append(coordinate)
-
-    # Cropped image of above dimension (It will not change original image)
+    # 9. take part of the reference which corresponds to the sector and save it to a temp image
+    # (It will not change original image)
     im1 = im.crop((left, top, right, bottom)) # this is PIL Image object, represents image
     im1.save(r"tempImage.jpeg")
     Image.open(r"tempImage.jpeg")
     # im1.show()
     
-    image = ColorThief("tempImage.jpeg") # this is ColorThief object, represents image
+
     
-    # Find dominant color
+    # 10. Find dominant color of sector from step 9
     color_thief = ColorThief("tempImage.jpeg")
     dominant_color = color_thief.get_color(quality=1)
     print("dominant_color:")
     print(dominant_color)
-
     os.remove("tempImage.jpeg") 
 
-    # find dominant color
-    # find the name of image with this dominant color
 
+    # 11. find best match color for the sector image from the array of palette colors
     best_match_color = closest_color(dominant_color)
     print("best_match_color:")
     print(best_match_color)
 
- 
+    # 12. find the index and then name of the best match color for the sector image (in an array with dominant colors of all palette photos)
     index_of_best_match_color = -1
     for i in range(0, len(all_rgb_of_img)):
         if all_rgb_of_img[i] == best_match_color:
@@ -173,14 +179,12 @@ for i in grid_coordinates:
     print("dom_color_image_name:")
     print(dom_color_image_name)
 
+
+    # 13. incert the best matching photo into the canvas by its name
     for image_name in os.listdir(folder_dir):
-        print("image_name:")
-        print(image_name)
+        
         if image_name == dom_color_image_name:
             image_path = folder_dir + "/" + image_name
-
-            print("image_path:")
-            print(image_path)
 
             img = Image.open(image_path, 'r')
 
