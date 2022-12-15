@@ -40,19 +40,26 @@ folder_dir = "/Users/mkarpava/Documents/3_photos"
     # - save file names for every photo in an array
         # - indexes in both arrays corresponds to each other
 
-dominant_colors = []
-file_names = []
+def scan_palette(folder_dir):
+    dominant_colors = []
+    file_names = []
 
-for image in os.listdir(folder_dir):
-    if (image.endswith(".jpeg")):
-        name = os.path.basename(image)
-        file_names.append(name)
+    for image in os.listdir(folder_dir):
+        if (image.endswith(".jpeg")):
+            name = os.path.basename(image)
+            file_names.append(name)
 
-        path_to_image = folder_dir + "/" + name
+            path_to_image = folder_dir + "/" + name
 
-        color_thief = ColorThief(path_to_image)
-        dominant_color = color_thief.get_color(quality=1)
-        dominant_colors.append(dominant_color)
+            color_thief = ColorThief(path_to_image)
+            dominant_color = color_thief.get_color(quality=1)
+            dominant_colors.append(dominant_color)
+
+    return (dominant_colors, file_names)
+
+(dominant_colors, file_names) = scan_palette(folder_dir)
+
+
 
 
 # 2. save all this info into a dictionary and then into a file convert.txt      
