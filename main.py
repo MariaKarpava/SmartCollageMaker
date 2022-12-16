@@ -120,46 +120,60 @@ im.save(r"NewImage.jpeg")
 Image.open(r"NewImage.jpeg")
 
 
+
 sectors_count = 50 # количество секторов
 
 # 6. find grid coordinates of sectors:
-grid_coordinates = []
-for x in range(0, sectors_count):      
-    for y in range(0, sectors_count):        
-        coordinate = []
-        coordinate.append(x)
-        coordinate.append(y)
-        grid_coordinates.append(coordinate)
+def find_grid_coordinates(sectors_count):
+    grid_coordinates = []
+    for x in range(0, sectors_count):      
+        for y in range(0, sectors_count):        
+            coordinate = []
+            coordinate.append(x)
+            coordinate.append(y)
+            grid_coordinates.append(coordinate)
+    
+    return grid_coordinates
+
+grid_coordinates = find_grid_coordinates(50)
+
+
+# 7. Create a canvas 
+def create_canvas(canvas_size, file_name):
+    canvas = Image.new('RGB', canvas_size, (250,250,250))
+    canvas.save(file_name)
+
+create_canvas((999, 999), "canvasImage.jpeg")
 
 
 img_step = 20 # 1000/50
-print("grid_coordinates")
-print(len(grid_coordinates))
-
-# 7. Create a canvas 
-canvas = Image.new('RGB', (999, 999), (250,250,250))
-canvas.save(r"canvasImage.jpeg")
-
-
 
 for i in grid_coordinates:
     # 8. count the coordinates where to insert the specific palette photo
+    def count_coordinates(img_step):
+        coordinate = []
 
-    coordinate = []
-    x = i[0]*img_step
-    y = i[1]*img_step
-    coordinate.append(x)
-    coordinate.append(y)
-    
-    a = coordinate[0]+img_step-1
-    b = coordinate[1]+img_step-1
-    coordinate.append(a)
-    coordinate.append(b)
+        x = i[0]*img_step
+        y = i[1]*img_step
+        coordinate.append(x)
+        coordinate.append(y)
+        
+        a = coordinate[0]+img_step-1
+        b = coordinate[1]+img_step-1
+        coordinate.append(a)
+        coordinate.append(b)
 
-    left = coordinate[0]
-    top = coordinate[1]
-    right = coordinate[2]
-    bottom = coordinate[3]
+        left = coordinate[0]
+        top = coordinate[1]
+        right = coordinate[2]
+        bottom = coordinate[3]
+
+        return (left, top, right, bottom)
+
+    (left, top, right, bottom) = count_coordinates(20)
+
+
+
 
     # 9. take part of the reference which corresponds to the sector and save it to a temp image
     # (It will not change original image)
@@ -204,6 +218,9 @@ for i in grid_coordinates:
 
             newsize = (img_step, img_step)
             img = img.resize(newsize)
+
+            canvas = Image.open("canvasImage.jpeg")
+
 
             canvas.paste(img, (left, top))
             canvas.save(r"canvasImage.jpeg")
