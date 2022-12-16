@@ -177,59 +177,71 @@ for i in grid_coordinates:
 
     # 9. take part of the reference which corresponds to the sector and save it to a temp image
     # (It will not change original image)
-    im1 = im.crop((left, top, right, bottom)) # this is PIL Image object, represents image
-    im1.save(r"tempImage.jpeg")
-    Image.open(r"tempImage.jpeg")
-    # im1.show()
+    def reference_img_crop(reference_img):
+        im1 = reference_img.crop((left, top, right, bottom)) # this is PIL Image object, represents image
+        im1.save(r"tempImage.jpeg")
+        Image.open(r"tempImage.jpeg")
+    
+    reference_img_crop(im)
+        
     
 
     
     # 10. Find dominant color of sector from step 9
-    color_thief = ColorThief("tempImage.jpeg")
-    dominant_color = color_thief.get_color(quality=1)
-    print("dominant_color:")
-    print(dominant_color)
-    os.remove("tempImage.jpeg") 
+    def sector_dominant_color(img_name):
+        color_thief = ColorThief(img_name)
+        dominant_color = color_thief.get_color(quality=1)
+        os.remove(img_name) 
+
+        return dominant_color
+    
+    dominant_color = sector_dominant_color("tempImage.jpeg")
 
 
     # 11. find best match color for the sector image from the array of palette colors
-    best_match_color = closest_color(dominant_color)
-    print("best_match_color:")
-    print(best_match_color)
-
     # 12. find the index and then name of the best match color for the sector image (in an array with dominant colors of all palette photos)
-    index_of_best_match_color = -1
-    for i in range(0, len(all_rgb_of_img)):
-        if all_rgb_of_img[i] == best_match_color:
-            index_of_best_match_color = i
 
-    dom_color_image_name = all_names_of_img[index_of_best_match_color]
-    print("dom_color_image_name:")
-    print(dom_color_image_name)
+    def find_name_of_sector_bestMatchColor(all_names_of_img):
+        best_match_color = closest_color(dominant_color)
+        
+        index_of_best_match_color = -1
+        for i in range(0, len(all_rgb_of_img)):
+            if all_rgb_of_img[i] == best_match_color:
+                index_of_best_match_color = i
+
+        dom_color_image_name = all_names_of_img[index_of_best_match_color]
+
+        return  dom_color_image_name
+
+
+    dom_color_image_name = find_name_of_sector_bestMatchColor(all_names_of_img)
+
 
 
     # 13. incert the best matching photo into the canvas by its name
-    for image_name in os.listdir(folder_dir):
-        
-        if image_name == dom_color_image_name:
-            image_path = folder_dir + "/" + image_name
+    def best_matching_photo_into_canvas(folder_dir, dom_color_image_name):
 
-            img = Image.open(image_path, 'r')
+        for image_name in os.listdir(folder_dir):
+            
+            if image_name == dom_color_image_name:
+                image_path = folder_dir + "/" + image_name
 
-            newsize = (img_step, img_step)
-            img = img.resize(newsize)
+                img = Image.open(image_path, 'r')
 
-            canvas = Image.open("canvasImage.jpeg")
+                newsize = (img_step, img_step)
+                img = img.resize(newsize)
 
+                canvas = Image.open("canvasImage.jpeg")
 
-            canvas.paste(img, (left, top))
-            canvas.save(r"canvasImage.jpeg")
+                canvas.paste(img, (left, top))
+                canvas.save(r"canvasImage.jpeg")
 
-            # os.remove("resized_img.jpeg") 
+                # print(image_name)
 
+        return print("done")
 
-canvas.show()
-
+    
+    best_matching_photo_into_canvas(folder_dir, dom_color_image_name)
 
 
 
