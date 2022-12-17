@@ -33,6 +33,8 @@ import json
 
 
 
+
+
 # 1. iterate over palette photos in a folder_dir: 
     # - save dominant colors of every photo in an array 
     # - save file names for every photo in an array
@@ -115,11 +117,19 @@ im = Image.open(r"car.jpeg")
 width, height = im.size
 
 newsize = (999, 999)
-im = im.resize(newsize)
-im.save(r"NewImage.jpeg")
-Image.open(r"NewImage.jpeg")
 
+def resize_reference_img(img_to_resize, newsize, new_img_name):
+    im = img_to_resize.resize(newsize)
+    im.save(new_img_name)
+    Image.open(new_img_name)
+    im.show()
 
+resize_reference_img(im, newsize, "NewImage.jpeg")
+
+# # new code:
+# # reaize reference img 
+# side_length = 1000
+# my_center_crop(im, side_length)
 
 sectors_count = 50 # количество секторов
 
@@ -182,7 +192,8 @@ for i in grid_coordinates:
         im1.save(r"tempImage.jpeg")
         Image.open(r"tempImage.jpeg")
     
-    reference_img_crop(im)
+    new_image = Image.open(r"NewImage.jpeg")
+    reference_img_crop(new_image)
         
     
 
@@ -238,7 +249,7 @@ for i in grid_coordinates:
 
                 # print(image_name)
 
-        return print("done")
+        return 
 
     
     best_matching_photo_into_canvas(folder_dir, dom_color_image_name)
