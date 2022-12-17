@@ -145,7 +145,7 @@ def find_grid_coordinates(sectors_count):
     
     return grid_coordinates
 
-grid_coordinates = find_grid_coordinates(50)
+grid_coordinates = find_grid_coordinates(sectors_count)
 
 
 # 7. Create a canvas 
@@ -158,9 +158,7 @@ create_canvas((999, 999), "canvasImage.jpeg")
 
 img_step = 20 # 1000/50
 
-for i in grid_coordinates:
-    # 8. count the coordinates where to insert the specific palette photo
-    def count_coordinates(img_step):
+def count_coordinates(i, img_step):
         coordinate = []
 
         x = i[0]*img_step
@@ -180,39 +178,22 @@ for i in grid_coordinates:
 
         return (left, top, right, bottom)
 
-    (left, top, right, bottom) = count_coordinates(20)
-
-
-
-
-    # 9. take part of the reference which corresponds to the sector and save it to a temp image
-    # (It will not change original image)
-    def reference_img_crop(reference_img):
+def reference_img_crop(reference_img):
         im1 = reference_img.crop((left, top, right, bottom)) # this is PIL Image object, represents image
         im1.save(r"tempImage.jpeg")
         Image.open(r"tempImage.jpeg")
     
-    new_image = Image.open(r"NewImage.jpeg")
-    reference_img_crop(new_image)
-        
-    
 
-    
-    # 10. Find dominant color of sector from step 9
-    def sector_dominant_color(img_name):
+def sector_dominant_color(img_name):
         color_thief = ColorThief(img_name)
         dominant_color = color_thief.get_color(quality=1)
         os.remove(img_name) 
 
         return dominant_color
-    
-    dominant_color = sector_dominant_color("tempImage.jpeg")
 
 
-    # 11. find best match color for the sector image from the array of palette colors
-    # 12. find the index and then name of the best match color for the sector image (in an array with dominant colors of all palette photos)
 
-    def find_name_of_sector_bestMatchColor(all_names_of_img):
+def find_name_of_sector_bestMatchColor(all_rgb_of_img, all_names_of_img):
         best_match_color = closest_color(dominant_color)
         
         index_of_best_match_color = -1
@@ -225,12 +206,7 @@ for i in grid_coordinates:
         return  dom_color_image_name
 
 
-    dom_color_image_name = find_name_of_sector_bestMatchColor(all_names_of_img)
-
-
-
-    # 13. incert the best matching photo into the canvas by its name
-    def best_matching_photo_into_canvas(folder_dir, dom_color_image_name):
+def best_matching_photo_into_canvas(folder_dir, dom_color_image_name, img_step, left, top):
 
         for image_name in os.listdir(folder_dir):
             
@@ -247,12 +223,36 @@ for i in grid_coordinates:
                 canvas.paste(img, (left, top))
                 canvas.save(r"canvasImage.jpeg")
 
-                # print(image_name)
-
         return 
 
+
+
+
+for i in grid_coordinates:
+    # 8. count the coordinates where to insert the specific palette photo
+    (left, top, right, bottom) = count_coordinates(i, img_step)
+
+
+    # 9. take part of the reference which corresponds to the sector and save it to a temp image
+    # (It will not change original image)
     
-    best_matching_photo_into_canvas(folder_dir, dom_color_image_name)
+    new_image = Image.open(r"NewImage.jpeg")
+    reference_img_crop(new_image)
+        
+
+    
+    # 10. Find dominant color of sector from step 9
+    dominant_color = sector_dominant_color("tempImage.jpeg")
+
+
+    # 11. find best match color for the sector image from the array of palette colors
+    # 12. find the index and then name of the best match color for the sector image (in an array with dominant colors of all palette photos)
+    dom_color_image_name = find_name_of_sector_bestMatchColor(all_rgb_of_img, all_names_of_img)
+
+
+
+    # 13. incert the best matching photo into the canvas by its name 
+    best_matching_photo_into_canvas(folder_dir, dom_color_image_name, img_step, left, top)
 
 
 
