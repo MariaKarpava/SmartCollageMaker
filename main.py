@@ -33,46 +33,46 @@ import json
 
 
 def main():
-    folder_dir = "/Users/mkarpava/Documents/3_photos"
-    (dominant_colors, file_names) = scan_palette(folder_dir)
-    save_palette_info(dominant_colors, file_names, 'convert.txt')
+    folder_with_palette_photos = "/Users/mkarpava/Documents/3_photos"
+    (palette_dominant_colors, palette_img_names) = scan_palette(folder_with_palette_photos)
+    save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, 'convert.txt')
     (all_names_of_img, all_rgb_of_img) = load_palette_info('convert.txt') 
 
     # 5. Resize and crop a reference image with PIL:
     # Opens a image in RGB mode
-    im = Image.open(r"car.jpeg")
+    reference_image = Image.open(r"car.jpeg")
 
     newsize = (999, 999)
 
-    resize_reference_img(im, newsize, "NewImage.jpeg")
+    resize_reference_img(reference_image, newsize, "resized_reference_image.jpeg")
 
     sectors_count = 50 # количество секторов
 
     grid_coordinates = find_grid_coordinates(sectors_count)
 
-    create_canvas((999, 999), "canvasImage.jpeg")
+    create_canvas(newsize, "canvas_image.jpeg")
 
     img_step = 20 # 1000/50
 
-    for i in grid_coordinates:
+    for coordinate in grid_coordinates:
     # 8. count the coordinates where to insert the specific palette photo
-        (left, top, right, bottom) = count_coordinates(i, img_step)
+        (left, top, right, bottom) = count_coordinates(coordinate, img_step)
 
         # 9. take part of the reference which corresponds to the sector and save it to a temp image
         # (It will not change original image)
         
-        new_image = Image.open(r"NewImage.jpeg")
-        reference_img_crop(new_image, left, top, right, bottom)
+        resized_reference_image = Image.open(r"resized_reference_image.jpeg")
+        reference_img_crop(resized_reference_image, left, top, right, bottom)
             
         # 10. Find dominant color of sector from step 9
-        dominant_color = sector_dominant_color("tempImage.jpeg")
+        dominant_color = sector_dominant_color("sector_image.jpeg")
 
         # 11. find best match color for the sector image from the array of palette colors
         # 12. find the index and then name of the best match color for the sector image (in an array with dominant colors of all palette photos)
-        dom_color_image_name = find_name_of_sector_bestMatchColor(dominant_color, all_rgb_of_img, all_names_of_img)
+        dom_color_image_name_for_sector = find_name_of_sector_best_match_color(dominant_color, all_rgb_of_img, all_names_of_img)
 
         # 13. incert the best matching photo into the canvas by its name 
-        best_matching_photo_into_canvas(folder_dir, dom_color_image_name, img_step, left, top)
+        best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, img_step, left, top)
 
 
 
@@ -81,36 +81,36 @@ def main():
 
 
 
-# 1. iterate over palette photos in a folder_dir: 
+# 1. iterate over palette photos in a folder_with_palette_photos: 
     # - save dominant colors of every photo in an array 
     # - save file names for every photo in an array
         # - indexes in both arrays corresponds to each other
 
-def scan_palette(folder_dir):
-    dominant_colors = []
-    file_names = []
+def scan_palette(folder_with_palette_photos):
+    palette_dominant_colors = []
+    palette_img_names = []
 
-    for image in os.listdir(folder_dir):
+    for image in os.listdir(folder_with_palette_photos):
         if (image.endswith(".jpeg")):
             name = os.path.basename(image)
-            file_names.append(name)
+            palette_img_names.append(name)
 
-            path_to_image = folder_dir + "/" + name
+            path_to_image = folder_with_palette_photos + "/" + name
 
             color_thief = ColorThief(path_to_image)
             dominant_color = color_thief.get_color(quality=1)
-            dominant_colors.append(dominant_color)
+            palette_dominant_colors.append(dominant_color)
 
-    return (dominant_colors, file_names)
+    return (palette_dominant_colors, palette_img_names)
 
 
 
 # 2. save all this info into a file  
-def save_palette_info(dominant_colors, file_names, output_file):
-    imageName_domColor = dict(zip(file_names, dominant_colors))
+def save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, output_txt_file_name):
+    palette_image_names_and_dom_colors = dict(zip(palette_img_names, palette_dominant_colors))
 
-    with open(output_file, 'w') as convert_file:
-        convert_file.write(json.dumps(imageName_domColor))
+    with open(output_txt_file_name, 'w') as convert_file:
+        convert_file.write(json.dumps(palette_image_names_and_dom_colors))
 
 
 
@@ -122,14 +122,14 @@ def load_palette_info(input_file):
         data = f.read()
         
     # reconstructing the data as a dictionary
-    fromJS_imageName_domColor = json.loads(data) 
+    fromJS_palette_image_names_and_dom_colors = json.loads(data) 
 
     # 4. reconstructing the data into arrays 
-    # TODO: I already have this arrays: dominant_colors, file_names
+    # TODO: I already have this arrays: palette_dominant_colors, palette_img_names
     all_names_of_img = [] 
     all_rgb_of_img = [] 
 
-    for name, rgb in fromJS_imageName_domColor.items(): 
+    for name, rgb in fromJS_palette_image_names_and_dom_colors.items(): 
         all_names_of_img.append(name)
         all_rgb_of_img.append(rgb)
     
@@ -156,7 +156,6 @@ def resize_reference_img(img_to_resize, newsize, new_img_name):
     im = img_to_resize.resize(newsize)
     im.save(new_img_name)
     Image.open(new_img_name)
-    # im.show()
 
 
 # # new code:
@@ -209,9 +208,9 @@ def count_coordinates(i, img_step):
 
 
 def reference_img_crop(reference_img, left, top, right, bottom):
-    im1 = reference_img.crop((left, top, right, bottom)) # this is PIL Image object, represents image
-    im1.save(r"tempImage.jpeg")
-    Image.open(r"tempImage.jpeg")
+    sector_image = reference_img.crop((left, top, right, bottom)) # this is PIL Image object, represents image
+    sector_image.save(r"sector_image.jpeg")
+    Image.open(r"sector_image.jpeg")
     
 
 def sector_dominant_color(img_name):
@@ -223,7 +222,7 @@ def sector_dominant_color(img_name):
 
 
 
-def find_name_of_sector_bestMatchColor(dominant_color, all_rgb_of_img, all_names_of_img):
+def find_name_of_sector_best_match_color(dominant_color, all_rgb_of_img, all_names_of_img):
     best_match_color = closest_color(dominant_color, all_rgb_of_img)
     
     index_of_best_match_color = -1
@@ -231,27 +230,27 @@ def find_name_of_sector_bestMatchColor(dominant_color, all_rgb_of_img, all_names
         if all_rgb_of_img[i] == best_match_color:
             index_of_best_match_color = i
 
-    dom_color_image_name = all_names_of_img[index_of_best_match_color]
+    dom_color_image_name_for_sector = all_names_of_img[index_of_best_match_color]
 
-    return  dom_color_image_name
+    return  dom_color_image_name_for_sector
 
 
-def best_matching_photo_into_canvas(folder_dir, dom_color_image_name, img_step, left, top):
+def best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, img_step, left, top):
 
-    for image_name in os.listdir(folder_dir):
+    for image_name in os.listdir(folder_with_palette_photos):
         
-        if image_name == dom_color_image_name:
-            image_path = folder_dir + "/" + image_name
+        if image_name == dom_color_image_name_for_sector:
+            image_path = folder_with_palette_photos + "/" + image_name
 
             img = Image.open(image_path, 'r')
 
             newsize = (img_step, img_step)
             img = img.resize(newsize)
 
-            canvas = Image.open("canvasImage.jpeg")
+            canvas = Image.open("canvas_image.jpeg")
 
             canvas.paste(img, (left, top))
-            canvas.save(r"canvasImage.jpeg")
+            canvas.save(r"canvas_image.jpeg")
 
     return 
 
