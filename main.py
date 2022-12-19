@@ -35,18 +35,19 @@ from resizing import *
 
 
 def main():
+    img_step = 20 # 1000/50
+
     folder_with_palette_photos = "/Users/mkarpava/Documents/3_photos"
-    (palette_dominant_colors, palette_img_names) = scan_palette(folder_with_palette_photos)
+    (palette_dominant_colors, palette_img_names) = scan_palette(folder_with_palette_photos, img_step)
     save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, 'convert.txt')
     (all_names_of_img, all_rgb_of_img) = load_palette_info('convert.txt') 
 
     # 5. Resize and crop a reference image with PIL:
     # Opens a image in RGB mode
-    reference_image = Image.open(r"car.jpeg")
+    reference_image = Image.open(r"christmas.jpeg")
 
     newsize = (999, 999)
 
-    # resize_reference_img(reference_image, newsize, "resized_and_croped_image.jpeg")
     recize_and_crop_image("christmas.jpeg", 1000, "resized_and_croped_image.jpeg")
 
     sectors_count = 50 # количество секторов
@@ -55,7 +56,7 @@ def main():
 
     create_canvas(newsize, "canvas_image.jpeg")
 
-    img_step = 20 # 1000/50
+    # img_step = 20 # 1000/50
 
     for coordinate in grid_coordinates:
     # 8. count the coordinates where to insert the specific palette photo
@@ -85,7 +86,7 @@ def main():
     # - save file names for every photo in an array
         # - indexes in both arrays corresponds to each other
 
-def scan_palette(folder_with_palette_photos):
+def scan_palette(folder_with_palette_photos, img_step):
     palette_dominant_colors = []
     palette_img_names = []
 
@@ -96,7 +97,9 @@ def scan_palette(folder_with_palette_photos):
 
             path_to_image = folder_with_palette_photos + "/" + name
 
-            color_thief = ColorThief(path_to_image)
+            recize_and_crop_image(path_to_image, img_step, "palette_img_for_color_thief.jpeg")
+
+            color_thief = ColorThief("palette_img_for_color_thief.jpeg")
             dominant_color = color_thief.get_color(quality=1)
             palette_dominant_colors.append(dominant_color)
 
@@ -155,12 +158,6 @@ def resize_reference_img(img_to_resize, newsize, new_img_name):
     im = img_to_resize.resize(newsize)
     im.save(new_img_name)
     Image.open(new_img_name)
-
-
-# # new code:
-# # reaize reference img 
-# side_length = 1000
-# my_center_crop(im, side_length)
 
 
 
