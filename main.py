@@ -31,6 +31,8 @@ from os import listdir
 # for writing info to a file on a disc
 import json
 
+from resizing import * 
+
 
 def main():
     folder_with_palette_photos = "/Users/mkarpava/Documents/3_photos"
@@ -44,7 +46,8 @@ def main():
 
     newsize = (999, 999)
 
-    resize_reference_img(reference_image, newsize, "resized_reference_image.jpeg")
+    # resize_reference_img(reference_image, newsize, "resized_and_croped_image.jpeg")
+    recize_and_crop_image("christmas.jpeg", 1000, "resized_and_croped_image.jpeg")
 
     sectors_count = 50 # количество секторов
 
@@ -60,8 +63,7 @@ def main():
 
         # 9. take part of the reference which corresponds to the sector and save it to a temp image
         # (It will not change original image)
-        
-        resized_reference_image = Image.open(r"resized_reference_image.jpeg")
+        resized_reference_image = Image.open(r"resized_and_croped_image.jpeg")
         reference_img_crop(resized_reference_image, left, top, right, bottom)
             
         # 10. Find dominant color of sector from step 9
@@ -73,9 +75,6 @@ def main():
 
         # 13. incert the best matching photo into the canvas by its name 
         best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, img_step, left, top)
-
-
-
 
 
 
@@ -243,14 +242,15 @@ def best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_
             image_path = folder_with_palette_photos + "/" + image_name
 
             img = Image.open(image_path, 'r')
+            img.save(r"palette_img.jpeg")
 
-            newsize = (img_step, img_step)
-            img = img.resize(newsize)
+            recize_and_crop_image(image_path, img_step, "palette_img.jpeg")
 
             canvas = Image.open("canvas_image.jpeg")
+            img = Image.open("palette_img.jpeg", 'r')
 
             canvas.paste(img, (left, top))
-            canvas.save(r"canvas_image.jpeg")
+    canvas.save(r"canvas_image.jpeg")
 
     return 
 
