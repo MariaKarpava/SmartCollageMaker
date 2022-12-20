@@ -32,39 +32,73 @@ from os import listdir
 import json
 
 from resizing import * 
+from crop_image_from_center import * 
 
 
 def main():
-    img_step = 20 # 1000/50
+    # What user gives us:
+    # 1. reference_image, 2. output_image_size, 3. sector_image_side_size
+    reference_image = Image.open(r"car.jpeg")
+    reference_image_name = reference_image.filename
+    output_image_size = (1023, 681)
+    sector_image_side_size = 15    # image side length / sectors count = 1000/50 = 20
+      
+    # What we calculate based on these data:
+    # 1. reference_image_name
+    # 2. new output image width and heigt 
+    output_image_width = output_image_size[0]+1
+    output_image_height = output_image_size[1]+1
+    
+    table_sectors_count = int(output_image_height / sector_image_side_size)
+    raw_sectors_count =  int(output_image_width / sector_image_side_size)
+    
+    if output_image_width % sector_image_side_size != 0:
+        raw_sectors_count = int(output_image_width / sector_image_side_size) # 66
+        raw_pixels_to_cut = output_image_width % sector_image_side_size   # 10
+        output_image_width = output_image_width - raw_pixels_to_cut # 66
+        
+    if output_image_height % sector_image_side_size != 0:
+        table_sectors_count = int(output_image_height / sector_image_side_size) 
+        table_pixels_to_cut = output_image_height % sector_image_side_size   
+        output_image_height = output_image_height - table_pixels_to_cut 
+        
+    
+    # setting new output img size   
+    output_image_size = (output_image_width, output_image_height)
+    output_image_width = output_image_size[0]-1
+    output_image_height = output_image_size[1]-1
+
+
+    if output_image_width > output_image_height:
+        smaller_side = output_image_height
+        larger_side = output_image_width
+    else:
+        smaller_side = output_image_width
+        larger_side = output_image_height
+    
+    
+    # print("output_image_size", output_image_size)
 
     folder_with_palette_photos = "/Users/mkarpava/Documents/3_photos"
-    (palette_dominant_colors, palette_img_names) = scan_palette(folder_with_palette_photos, img_step)
+    (palette_dominant_colors, palette_img_names) = scan_palette(folder_with_palette_photos, sector_image_side_size)
     save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, 'convert.txt')
     (all_names_of_img, all_rgb_of_img) = load_palette_info('convert.txt') 
 
-    # 5. Resize and crop a reference image with PIL:
-    # Opens a image in RGB mode
-    reference_image = Image.open(r"christmas.jpeg")
 
-    newsize = (999, 999)
+    # 5. Crop a reference image:
+    crop_image(reference_image_name, larger_side, smaller_side, "cropped_image.jpeg")
 
-    recize_and_crop_image("christmas.jpeg", 1000, "resized_and_croped_image.jpeg")
-
-    sectors_count = 50 # количество секторов
-
-    grid_coordinates = find_grid_coordinates(sectors_count)
-
-    create_canvas(newsize, "canvas_image.jpeg")
-
-    # img_step = 20 # 1000/50
+    grid_coordinates = find_grid_coordinates(raw_sectors_count, table_sectors_count)
+    create_canvas(output_image_size, "canvas_image.jpeg")
+  
 
     for coordinate in grid_coordinates:
     # 8. count the coordinates where to insert the specific palette photo
-        (left, top, right, bottom) = count_coordinates(coordinate, img_step)
+        (left, top, right, bottom) = count_coordinates(coordinate, sector_image_side_size)
 
         # 9. take part of the reference which corresponds to the sector and save it to a temp image
         # (It will not change original image)
-        resized_reference_image = Image.open(r"resized_and_croped_image.jpeg")
+        resized_reference_image = Image.open(r"cropped_image.jpeg")
         reference_img_crop(resized_reference_image, left, top, right, bottom)
             
         # 10. Find dominant color of sector from step 9
@@ -75,7 +109,7 @@ def main():
         dom_color_image_name_for_sector = find_name_of_sector_best_match_color(dominant_color, all_rgb_of_img, all_names_of_img)
 
         # 13. incert the best matching photo into the canvas by its name 
-        best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, img_step, left, top)
+        best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, sector_image_side_size, left, top)
 
 
 
@@ -86,7 +120,7 @@ def main():
     # - save file names for every photo in an array
         # - indexes in both arrays corresponds to each other
 
-def scan_palette(folder_with_palette_photos, img_step):
+def scan_palette(folder_with_palette_photos, sector_image_side_size):
     palette_dominant_colors = []
     palette_img_names = []
 
@@ -97,7 +131,7 @@ def scan_palette(folder_with_palette_photos, img_step):
 
             path_to_image = folder_with_palette_photos + "/" + name
 
-            recize_and_crop_image(path_to_image, img_step, "palette_img_for_color_thief.jpeg")
+            recize_and_crop_image(path_to_image, sector_image_side_size, "palette_img_for_color_thief.jpeg")
 
             color_thief = ColorThief("palette_img_for_color_thief.jpeg")
             dominant_color = color_thief.get_color(quality=1)
@@ -154,23 +188,24 @@ def closest_color(rgb, all_rgb_of_img):
 
 
 
-def resize_reference_img(img_to_resize, newsize, new_img_name):
-    im = img_to_resize.resize(newsize)
+def resize_reference_img(img_to_resize, output_image_size, new_img_name):
+    im = img_to_resize.resize(output_image_size)
     im.save(new_img_name)
     Image.open(new_img_name)
 
 
-
 # 6. find grid coordinates of sectors:
-def find_grid_coordinates(sectors_count):
+def find_grid_coordinates(raw_sectors_count, table_sectors_count):
     grid_coordinates = []
-    for x in range(0, sectors_count):      
-        for y in range(0, sectors_count):        
+    
+    for x in range(0, raw_sectors_count):      
+        for y in range(0, table_sectors_count):        
             coordinate = []
             coordinate.append(x)
             coordinate.append(y)
             grid_coordinates.append(coordinate)
-    
+
+    # print("greed coordinates", grid_coordinates)
     return grid_coordinates
 
 
@@ -181,17 +216,17 @@ def create_canvas(canvas_size, file_name):
     canvas = Image.new('RGB', canvas_size, (250,250,250))
     canvas.save(file_name)
 
-
-def count_coordinates(i, img_step):
+# How to rename i, a, b?
+def count_coordinates(i, sector_image_side_size):
     coordinate = []
 
-    x = i[0]*img_step
-    y = i[1]*img_step
+    x = i[0]*sector_image_side_size
+    y = i[1]*sector_image_side_size
     coordinate.append(x)
     coordinate.append(y)
     
-    a = coordinate[0]+img_step-1
-    b = coordinate[1]+img_step-1
+    a = coordinate[0]+sector_image_side_size-1
+    b = coordinate[1]+sector_image_side_size-1
     coordinate.append(a)
     coordinate.append(b)
 
@@ -231,7 +266,7 @@ def find_name_of_sector_best_match_color(dominant_color, all_rgb_of_img, all_nam
     return  dom_color_image_name_for_sector
 
 
-def best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, img_step, left, top):
+def best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, sector_image_side_size, left, top):
 
     for image_name in os.listdir(folder_with_palette_photos):
         
@@ -241,12 +276,13 @@ def best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_
             img = Image.open(image_path, 'r')
             img.save(r"palette_img.jpeg")
 
-            recize_and_crop_image(image_path, img_step, "palette_img.jpeg")
+            recize_and_crop_image(image_path, sector_image_side_size, "palette_img.jpeg")
 
             canvas = Image.open("canvas_image.jpeg")
             img = Image.open("palette_img.jpeg", 'r')
 
             canvas.paste(img, (left, top))
+
     canvas.save(r"canvas_image.jpeg")
 
     return 
