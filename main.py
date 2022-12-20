@@ -89,9 +89,14 @@ def main():
     crop_image(reference_image_name, larger_side, smaller_side, "cropped_image.jpeg")
 
     grid_coordinates = find_grid_coordinates(raw_sectors_count, table_sectors_count)
-    create_canvas(output_image_size, "canvas_image.jpeg")
-  
 
+    canvas = Image.new('RGB', output_image_size, (250,250,250))
+    
+    
+
+    print("Filling sectors started ...")
+
+    filled_sectors_count = 0
     for coordinate in grid_coordinates:
     # 8. count the coordinates where to insert the specific palette photo
         (left, top, right, bottom) = count_coordinates(coordinate, sector_image_side_size)
@@ -109,7 +114,14 @@ def main():
         dom_color_image_name_for_sector = find_name_of_sector_best_match_color(dominant_color, all_rgb_of_img, all_names_of_img)
 
         # 13. incert the best matching photo into the canvas by its name 
-        best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, sector_image_side_size, left, top)
+        best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, sector_image_side_size, canvas, left, top)
+
+        filled_sectors_count += 1
+        print("filled_sectors_count:", filled_sectors_count, "of", len(grid_coordinates))
+
+    canvas.save("canvas_image.jpeg")
+
+    print("Output image saved.")
 
 
 
@@ -211,11 +223,6 @@ def find_grid_coordinates(raw_sectors_count, table_sectors_count):
 
 
 
-# 7. Create a canvas 
-def create_canvas(canvas_size, file_name):
-    canvas = Image.new('RGB', canvas_size, (250,250,250))
-    canvas.save(file_name)
-
 # How to rename i, a, b?
 def count_coordinates(i, sector_image_side_size):
     coordinate = []
@@ -266,24 +273,19 @@ def find_name_of_sector_best_match_color(dominant_color, all_rgb_of_img, all_nam
     return  dom_color_image_name_for_sector
 
 
-def best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, sector_image_side_size, left, top):
+def best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, sector_image_side_size, canvas, left, top):
+    image_path = folder_with_palette_photos + "/" + dom_color_image_name_for_sector
 
-    for image_name in os.listdir(folder_with_palette_photos):
-        
-        if image_name == dom_color_image_name_for_sector:
-            image_path = folder_with_palette_photos + "/" + image_name
+    img = Image.open(image_path, 'r')
+    img.save(r"palette_img.jpeg")
 
-            img = Image.open(image_path, 'r')
-            img.save(r"palette_img.jpeg")
+    recize_and_crop_image(image_path, sector_image_side_size, "palette_img.jpeg")
 
-            recize_and_crop_image(image_path, sector_image_side_size, "palette_img.jpeg")
+    img = Image.open("palette_img.jpeg", 'r')
 
-            canvas = Image.open("canvas_image.jpeg")
-            img = Image.open("palette_img.jpeg", 'r')
+    canvas.paste(img, (left, top))
 
-            canvas.paste(img, (left, top))
-
-    canvas.save(r"canvas_image.jpeg")
+    
 
     return 
 
