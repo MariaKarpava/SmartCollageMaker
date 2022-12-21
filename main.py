@@ -36,20 +36,17 @@ from crop_image_from_center import *
 import argparse
 
 
+
 def main():
-    parser = argparse.ArgumentParser(description ='app description.')
-    parser.add_argument('filename')          
-    parser.add_argument('--output-image-dimensions', dest = 'output_image_size', help = 'width then height', nargs = 2, type = int, required = True)  
-    parser.add_argument('--sector-image-size', dest = 'sector_image_side_size', type = int, required = True)  
-    args = parser.parse_args()
-    print(args.filename, args.output_image_size, args.sector_image_side_size)
-    
+    # Parsing CL arguments:
+    args = parse_arguments()
 
     # What user gives us:
-    # 1. reference_image, 2. output_image_size, 3. sector_image_side_size
     reference_image_name = args.filename
     output_image_size = args.output_image_size   #(1023, 681) but here it is an array
     sector_image_side_size = args.sector_image_side_size   # 15 , image side length / sectors count = 1000/50 = 20
+    folder_with_palette_photos = args.folder_with_palette_photos   #"/Users/mkarpava/Documents/3_photos"
+    output_filename = args.output_filename
       
 
     # What we calculate based on these data:
@@ -88,7 +85,6 @@ def main():
     
     # print("output_image_size", output_image_size)
 
-    folder_with_palette_photos = "/Users/mkarpava/Documents/3_photos"
     (palette_dominant_colors, palette_img_names) = scan_palette(folder_with_palette_photos, sector_image_side_size)
     save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, 'convert.txt')
     (all_names_of_img, all_rgb_of_img) = load_palette_info('convert.txt') 
@@ -128,12 +124,27 @@ def main():
         filled_sectors_count += 1
         print("filled_sectors_count:", filled_sectors_count, "of", len(grid_coordinates))
 
-    canvas.save("canvas_image.jpeg")
+    canvas.save(output_filename)
 
     print("Output image saved.")
 
 
 
+
+
+
+# 0. Parsing CL arguments:
+def parse_arguments():
+    parser = argparse.ArgumentParser(description ='app description.')
+    parser.add_argument('-i', '--filename', required = True) 
+    parser.add_argument('-o', '--output-filename', dest = 'output_filename', required = True)         
+    parser.add_argument('-oid', '--output-image-dimensions', dest = 'output_image_size', help = 'width then height', nargs = 2, type = int, required = True)  
+    parser.add_argument('-sis', '--sector-image-size', dest = 'sector_image_side_size', type = int, required = True)  
+    parser.add_argument('-fwpf', '--folder-with-palette-photos', dest = 'folder_with_palette_photos', required = True)  
+    args = parser.parse_args()
+    return args 
+    # print(args.filename, args.output_filename, args.output_image_size, args.sector_image_side_size, args.folder_with_palette_photos)
+        
 
 
 # 1. iterate over palette photos in a folder_with_palette_photos: 
