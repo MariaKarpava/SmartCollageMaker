@@ -33,16 +33,25 @@ import json
 
 from resizing import * 
 from crop_image_from_center import * 
+import argparse
 
 
 def main():
+    parser = argparse.ArgumentParser(description ='app description.')
+    parser.add_argument('filename')          
+    parser.add_argument('--output-image-dimensions', dest = 'output_image_size', help = 'width then height', nargs = 2, type = int, required = True)  
+    parser.add_argument('--sector-image-size', dest = 'sector_image_side_size', type = int, required = True)  
+    args = parser.parse_args()
+    print(args.filename, args.output_image_size, args.sector_image_side_size)
+    
+
     # What user gives us:
     # 1. reference_image, 2. output_image_size, 3. sector_image_side_size
-    reference_image = Image.open(r"car.jpeg")
-    reference_image_name = reference_image.filename
-    output_image_size = (1023, 681)
-    sector_image_side_size = 15    # image side length / sectors count = 1000/50 = 20
+    reference_image_name = args.filename
+    output_image_size = args.output_image_size   #(1023, 681) but here it is an array
+    sector_image_side_size = args.sector_image_side_size   # 15 , image side length / sectors count = 1000/50 = 20
       
+
     # What we calculate based on these data:
     # 1. reference_image_name
     # 2. new output image width and heigt 
@@ -275,17 +284,13 @@ def find_name_of_sector_best_match_color(dominant_color, all_rgb_of_img, all_nam
 
 def best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, sector_image_side_size, canvas, left, top):
     image_path = folder_with_palette_photos + "/" + dom_color_image_name_for_sector
-
     img = Image.open(image_path, 'r')
     img.save(r"palette_img.jpeg")
 
     recize_and_crop_image(image_path, sector_image_side_size, "palette_img.jpeg")
-
     img = Image.open("palette_img.jpeg", 'r')
 
     canvas.paste(img, (left, top))
-
-    
 
     return 
 
@@ -293,9 +298,5 @@ def best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_
 
 if __name__ == "__main__":
     main()
-
-
-
-
 
 
