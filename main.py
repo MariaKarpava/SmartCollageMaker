@@ -160,8 +160,8 @@ def parse_arguments_and_execute_command():
 
         return 'scan-palette'
 
-    elif command_name == 'buid-image':
-        # buid-image -i christmas.jpeg -o output.jpeg -oid 1023 681 -sis 15 -fwpf /Users/mkarpava/Documents/3_photos
+    elif command_name == 'build-image':
+        # build-image -i christmas.jpeg -o output.jpeg -oid 1023 681 -sis 15 -fwpf /Users/mkarpava/Documents/3_photos
         print('hi!')
         parser.add_argument('-i', '--filename', required = True) 
         parser.add_argument('-o', '--output-filename', dest = 'output_filename', required = True)         
@@ -185,7 +185,7 @@ def parse_arguments_and_execute_command():
                     folder_with_palette_photos,
                     output_filename)
 
-        return 'buid-image'
+        return 'build-image'
 
     else:
         return 'Unrecognized command'
