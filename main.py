@@ -34,21 +34,31 @@ import json
 from resizing import * 
 from crop_image_from_center import * 
 import argparse
+import sys
 
 
 
 def main():
-    # Parsing CL arguments:
-    args = parse_arguments()
+    parse_arguments_and_execute_command()
 
-    # What user gives us:
-    reference_image_name = args.filename
-    output_image_size = args.output_image_size   #(1023, 681) but here it is an array
-    sector_image_side_size = args.sector_image_side_size   # 15 , image side length / sectors count = 1000/50 = 20
-    folder_with_palette_photos = args.folder_with_palette_photos   #"/Users/mkarpava/Documents/3_photos"
-    output_filename = args.output_filename
-      
 
+    
+
+# Process palette:
+def process_palette(folder_with_palette_photos, sector_image_side_size):
+    (palette_dominant_colors, palette_img_names) = scan_palette(folder_with_palette_photos, sector_image_side_size)
+    save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, 'convert.txt')
+    return 
+
+
+
+# Build image:
+def build_image(
+        output_image_size,
+        sector_image_side_size,
+        reference_image_name,
+        folder_with_palette_photos,
+        output_filename):
     # What we calculate based on these data:
     # 1. reference_image_name
     # 2. new output image width and heigt 
@@ -81,16 +91,9 @@ def main():
     else:
         smaller_side = output_image_width
         larger_side = output_image_height
-    
-    
-    # print("output_image_size", output_image_size)
+       
 
-    (palette_dominant_colors, palette_img_names) = scan_palette(folder_with_palette_photos, sector_image_side_size)
-    save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, 'convert.txt')
-    (all_names_of_img, all_rgb_of_img) = load_palette_info('convert.txt') 
-
-
-    # 5. Crop a reference image:
+    # Crop a reference image:
     crop_image(reference_image_name, larger_side, smaller_side, "cropped_image.jpeg")
 
     grid_coordinates = find_grid_coordinates(raw_sectors_count, table_sectors_count)
@@ -98,27 +101,28 @@ def main():
     canvas = Image.new('RGB', output_image_size, (250,250,250))
     
     
-
     print("Filling sectors started ...")
+
+    (all_names_of_img, all_rgb_of_img) = load_palette_info('convert.txt') 
 
     filled_sectors_count = 0
     for coordinate in grid_coordinates:
-    # 8. count the coordinates where to insert the specific palette photo
+    # Count the coordinates where to insert the specific palette photo
         (left, top, right, bottom) = count_coordinates(coordinate, sector_image_side_size)
 
-        # 9. take part of the reference which corresponds to the sector and save it to a temp image
+        # Take part of the reference which corresponds to the sector and save it to a temp image
         # (It will not change original image)
         resized_reference_image = Image.open(r"cropped_image.jpeg")
         reference_img_crop(resized_reference_image, left, top, right, bottom)
             
-        # 10. Find dominant color of sector from step 9
+        # Find dominant color of sector from step 9
         dominant_color = sector_dominant_color("sector_image.jpeg")
 
-        # 11. find best match color for the sector image from the array of palette colors
-        # 12. find the index and then name of the best match color for the sector image (in an array with dominant colors of all palette photos)
+        # Find best match color for the sector image from the array of palette colors
+        # Find the index and then name of the best match color for the sector image (in an array with dominant colors of all palette photos)
         dom_color_image_name_for_sector = find_name_of_sector_best_match_color(dominant_color, all_rgb_of_img, all_names_of_img)
 
-        # 13. incert the best matching photo into the canvas by its name 
+        # Incert the best matching photo into the canvas by its name 
         best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, sector_image_side_size, canvas, left, top)
 
         filled_sectors_count += 1
@@ -132,22 +136,60 @@ def main():
 
 
 
-
-# 0. Parsing CL arguments:
-def parse_arguments():
+# Parse CL arguments and execute command (scan palette or build image).
+# Returns name of the executed command.
+def parse_arguments_and_execute_command():
     parser = argparse.ArgumentParser(description ='app description.')
-    parser.add_argument('-i', '--filename', required = True) 
-    parser.add_argument('-o', '--output-filename', dest = 'output_filename', required = True)         
-    parser.add_argument('-oid', '--output-image-dimensions', dest = 'output_image_size', help = 'width then height', nargs = 2, type = int, required = True)  
-    parser.add_argument('-sis', '--sector-image-size', dest = 'sector_image_side_size', type = int, required = True)  
-    parser.add_argument('-fwpf', '--folder-with-palette-photos', dest = 'folder_with_palette_photos', required = True)  
-    args = parser.parse_args()
-    return args 
-    # print(args.filename, args.output_filename, args.output_image_size, args.sector_image_side_size, args.folder_with_palette_photos)
+    
+    # python main.py scan-palette -sis 15 -fwpf /Users/mkarpava/Documents/3_photos 
+    command_name = sys.argv[1]
+
+    if command_name == 'scan-palette':
+        parser.add_argument('-sis', '--sector-image-size', dest = 'sector_image_side_size', type = int, required = True)  
+        parser.add_argument('-fwpf', '--folder-with-palette-photos', dest = 'folder_with_palette_photos', required = True)  
+
+        parse_all_other_arguments = parser.parse_args(sys.argv[2:])
+
+        sector_image_side_size = parse_all_other_arguments.sector_image_side_size   # 15 , image side length / sectors count = 1000/50 = 20
+        folder_with_palette_photos = parse_all_other_arguments.folder_with_palette_photos   #"/Users/mkarpava/Documents/3_photos"
+             
+        process_palette(folder_with_palette_photos, sector_image_side_size)
+
+        return 'scan-palette'
+
+    elif command_name == 'buid-image':
+        # buid-image -i christmas.jpeg -o output.jpeg -oid 1023 681 -sis 15 -fwpf /Users/mkarpava/Documents/3_photos
+        print('hi!')
+        parser.add_argument('-i', '--filename', required = True) 
+        parser.add_argument('-o', '--output-filename', dest = 'output_filename', required = True)         
+        parser.add_argument('-oid', '--output-image-dimensions', dest = 'output_image_size', help = 'width then height', nargs = 2, type = int, required = True) 
+        parser.add_argument('-sis', '--sector-image-size', dest = 'sector_image_side_size', type = int, required = True)  
+        parser.add_argument('-fwpf', '--folder-with-palette-photos', dest = 'folder_with_palette_photos', required = True)  
+
+        print("***", sys.argv[2:])
+        parse_all_other_arguments = parser.parse_args(sys.argv[2:])
+        print("*** ***", parse_all_other_arguments)
         
+        reference_image_name = parse_all_other_arguments.filename
+        output_filename =  parse_all_other_arguments.output_filename
+        output_image_size = parse_all_other_arguments.output_image_size   #(1023, 681) but here it is an array
+        sector_image_side_size = parse_all_other_arguments.sector_image_side_size   # 15 , image side length / sectors count = 1000/50 = 20
+        folder_with_palette_photos = parse_all_other_arguments.folder_with_palette_photos   #"/Users/mkarpava/Documents/3_photos"
+    
+        build_image(output_image_size,
+                    sector_image_side_size,
+                    reference_image_name,
+                    folder_with_palette_photos,
+                    output_filename)
+
+        return 'buid-image'
+
+    else:
+        return 'Unrecognized command'
 
 
-# 1. iterate over palette photos in a folder_with_palette_photos: 
+
+# Iiterate over palette photos in a folder_with_palette_photos: 
     # - save dominant colors of every photo in an array 
     # - save file names for every photo in an array
         # - indexes in both arrays corresponds to each other
@@ -173,7 +215,7 @@ def scan_palette(folder_with_palette_photos, sector_image_side_size):
 
 
 
-# 2. save all this info into a file  
+# Save all this info into a file  
 def save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, output_txt_file_name):
     palette_image_names_and_dom_colors = dict(zip(palette_img_names, palette_dominant_colors))
 
@@ -185,14 +227,14 @@ def save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, 
 
 
 def load_palette_info(input_file):
-    # 3. reading the data from the file 
+    # Reading the data from the file 
     with open(input_file) as f:
         data = f.read()
         
     # reconstructing the data as a dictionary
     fromJS_palette_image_names_and_dom_colors = json.loads(data) 
 
-    # 4. reconstructing the data into arrays 
+    # Reconstructing the data into arrays 
     # TODO: I already have this arrays: palette_dominant_colors, palette_img_names
     all_names_of_img = [] 
     all_rgb_of_img = [] 
@@ -226,7 +268,7 @@ def resize_reference_img(img_to_resize, output_image_size, new_img_name):
     Image.open(new_img_name)
 
 
-# 6. find grid coordinates of sectors:
+# Find grid coordinates of sectors:
 def find_grid_coordinates(raw_sectors_count, table_sectors_count):
     grid_coordinates = []
     
