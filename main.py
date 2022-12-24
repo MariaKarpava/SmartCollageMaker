@@ -21,6 +21,8 @@ import numpy as np
 from patchify import patchify
 from PIL import Image
 
+import time
+
 
 
 # for iteration on files in a folder
@@ -39,9 +41,10 @@ import sys
 
 
 def main():
+    start_time = time.time()
     parse_arguments_and_execute_command()
-
-
+    elapsed_seconds = time.time() - start_time
+    print("Command finished. Elapsed time (sec):", elapsed_seconds)
     
 
 # Process palette:
