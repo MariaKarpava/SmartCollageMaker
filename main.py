@@ -201,7 +201,11 @@ def scan_palette(folder_with_palette_photos, sector_image_side_size):
     palette_dominant_colors = []
     palette_img_names = []
 
-    for image in os.listdir(folder_with_palette_photos):
+    print("Scanning palette started...")
+    
+    scanned_count = 0
+    all_files = os.listdir(folder_with_palette_photos)
+    for image in all_files:
         if (image.endswith(".jpeg")):
             name = os.path.basename(image)
             palette_img_names.append(name)
@@ -213,6 +217,9 @@ def scan_palette(folder_with_palette_photos, sector_image_side_size):
             color_thief = ColorThief("palette_img_for_color_thief.jpeg")
             dominant_color = color_thief.get_color(quality=1)
             palette_dominant_colors.append(dominant_color)
+
+        scanned_count += 1
+        print("scanned:", scanned_count, "of", len(all_files))
 
     return (palette_dominant_colors, palette_img_names)
 
