@@ -9,7 +9,7 @@ from scipy.cluster.vq import whiten
 from scipy.cluster.vq import kmeans
 import pandas as pd
 
-from colorthief import ColorThief
+from colorthief_customized import ColorThief
 import requests
 import seaborn as sns
 from PIL import Image
