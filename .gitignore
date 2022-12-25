@@ -1,3 +1,8 @@
+.DS_Store
 .venv/*
-*.jpeg
+Palette_Metadata/*
+Reference_Images/*
+Results/*
+Tmp/*
+
 convert.txt
