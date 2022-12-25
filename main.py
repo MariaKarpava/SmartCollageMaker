@@ -1,43 +1,13 @@
-#  importing Image class from PIL package
 from PIL import Image
-# import pyheif
-
-# for finding dominant color:
-import matplotlib.image as img
-import matplotlib.pyplot as plt
-from scipy.cluster.vq import whiten
-from scipy.cluster.vq import kmeans
-import pandas as pd
-
 from colorthief_customized import ColorThief
-import requests
-import seaborn as sns
-from PIL import Image
 from math import sqrt
-
-
-# for dividing image into parts:
-import numpy as np
-from patchify import patchify
-from PIL import Image
-
 import time
-
-
-
-# for iteration on files in a folder
-# import the modules
 import os
-from os import listdir
-
-# for writing info to a file on a disc
 import json
-
 from resizing import * 
 from crop_image_from_center import * 
 import argparse
 import sys
-
 
 
 def main():
