@@ -67,7 +67,7 @@ def build_image(
        
 
     # Crop a reference image:
-    crop_image(reference_image_name, larger_side, smaller_side, "cropped_image.jpeg")
+    crop_image(reference_image_name, larger_side, smaller_side, "Tmp/cropped_image.jpeg")
 
     grid_coordinates = find_grid_coordinates(raw_sectors_count, table_sectors_count)
 
@@ -85,11 +85,11 @@ def build_image(
 
         # Take part of the reference which corresponds to the sector and save it to a temp image
         # (It will not change original image)
-        resized_reference_image = Image.open(r"cropped_image.jpeg")
+        resized_reference_image = Image.open(r"Tmp/cropped_image.jpeg")
         reference_img_crop(resized_reference_image, left, top, right, bottom)
             
         # Find dominant color of sector from step 9
-        dominant_color = sector_dominant_color("sector_image.jpeg")
+        dominant_color = sector_dominant_color("Tmp/sector_image.jpeg")
 
         # Find best match color for the sector image from the array of palette colors
         # Find the index and then name of the best match color for the sector image (in an array with dominant colors of all palette photos)
@@ -289,8 +289,8 @@ def count_coordinates(i, sector_image_side_size):
 
 def reference_img_crop(reference_img, left, top, right, bottom):
     sector_image = reference_img.crop((left, top, right, bottom)) # this is PIL Image object, represents image
-    sector_image.save(r"sector_image.jpeg")
-    Image.open(r"sector_image.jpeg")
+    sector_image.save(r"Tmp/sector_image.jpeg")
+    Image.open(r"Tmp/sector_image.jpeg")
     
 
 def sector_dominant_color(img_name):
@@ -318,10 +318,10 @@ def find_name_of_sector_best_match_color(dominant_color, all_rgb_of_img, all_nam
 def best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, sector_image_side_size, canvas, left, top):
     image_path = folder_with_palette_photos + "/" + dom_color_image_name_for_sector
     img = Image.open(image_path, 'r')
-    img.save(r"palette_img.jpeg")
+    img.save(r"Tmp/palette_img.jpeg")
 
-    recize_and_crop_image(image_path, sector_image_side_size, "palette_img.jpeg")
-    img = Image.open("palette_img.jpeg", 'r')
+    recize_and_crop_image(image_path, sector_image_side_size, "Tmp/palette_img.jpeg")
+    img = Image.open("Tmp/palette_img.jpeg", 'r')
 
     canvas.paste(img, (left, top))
 
