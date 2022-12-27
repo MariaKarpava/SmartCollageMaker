@@ -37,12 +37,11 @@ def build_image(
     # 2. new output image width and heigt 
     # 3. new output image side size
     input_image_size =  Image.open(reference_image_name).size  #width, height 
-    input_image_width = input_image_size[0]+1
-    input_image_height = input_image_size[1]+1
+    input_image_width = input_image_size[0]
+    input_image_height = input_image_size[1]
 
-
-    output_image_width = output_image_size[0]+1
-    output_image_height = output_image_size[1]+1
+    output_image_width = output_image_size[0]
+    output_image_height = output_image_size[1]
 
     output_to_input_sector_ratio = output_image_width / input_image_width
     print("!!!!!output_to_input_sector_ratio", output_to_input_sector_ratio)
@@ -66,8 +65,8 @@ def build_image(
     
     # setting new output img size   ??????? 
     output_image_size = (output_image_width, output_image_height)
-    output_image_width = output_image_size[0]-1
-    output_image_height = output_image_size[1]-1
+    output_image_width = output_image_size[0]
+    output_image_height = output_image_size[1]
 
 
     if adjusted_input_image_width > adjusted_input_image_height:
@@ -303,7 +302,8 @@ def count_coordinates(i, sector_image_side_size):
 
 
 def reference_img_crop(reference_img, left, top, right, bottom):
-    sector_image = reference_img.crop((left, top, right, bottom)) # this is PIL Image object, represents image
+    # PIL crops excluding right column and bottom row, hence "+ 1" to include them.
+    sector_image = reference_img.crop((left, top, right + 1, bottom + 1))
     sector_image.save(r"Tmp/sector_image.jpeg")
     Image.open(r"Tmp/sector_image.jpeg")
     
