@@ -33,43 +33,55 @@ def build_image(
         folder_with_palette_photos,
         output_filename):
     # What we calculate based on these data:
-    # 1. reference_image_name
+    # 1. reference_image_size
     # 2. new output image width and heigt 
+    # 3. new output image side size
+    input_image_size =  Image.open(reference_image_name).size  #width, height 
+    input_image_width = input_image_size[0]+1
+    input_image_height = input_image_size[1]+1
+
+
     output_image_width = output_image_size[0]+1
     output_image_height = output_image_size[1]+1
-    
-    table_sectors_count = int(output_image_height / sector_image_side_size)
-    raw_sectors_count =  int(output_image_width / sector_image_side_size)
-    
-    if output_image_width % sector_image_side_size != 0:
-        raw_sectors_count = int(output_image_width / sector_image_side_size) # 66
-        raw_pixels_to_cut = output_image_width % sector_image_side_size   # 10
-        output_image_width = output_image_width - raw_pixels_to_cut # 66
+
+    output_to_input_sector_ratio = output_image_width / input_image_width
+    print("!!!!!output_to_input_sector_ratio", output_to_input_sector_ratio)
+    print()
+
+    output_image_sector_side_size = int(sector_image_side_size * output_to_input_sector_ratio)
+    print("*****output_image_sector_side_size", output_image_sector_side_size)
+    print()
+
+    height_sectors_count = int(input_image_height / sector_image_side_size)
+    width_sectors_count =  int(input_image_width / sector_image_side_size)
+
+
+    output_image_width =  width_sectors_count * output_image_sector_side_size
+    output_image_height = height_sectors_count * output_image_sector_side_size
+
+      
+    adjusted_input_image_width = width_sectors_count * sector_image_side_size  
+    adjusted_input_image_height = height_sectors_count * sector_image_side_size
         
-    if output_image_height % sector_image_side_size != 0:
-        table_sectors_count = int(output_image_height / sector_image_side_size) 
-        table_pixels_to_cut = output_image_height % sector_image_side_size   
-        output_image_height = output_image_height - table_pixels_to_cut 
-        
     
-    # setting new output img size   
+    # setting new output img size   ??????? 
     output_image_size = (output_image_width, output_image_height)
     output_image_width = output_image_size[0]-1
     output_image_height = output_image_size[1]-1
 
 
-    if output_image_width > output_image_height:
-        smaller_side = output_image_height
-        larger_side = output_image_width
+    if adjusted_input_image_width > adjusted_input_image_height:
+        smaller_side = adjusted_input_image_height
+        larger_side = adjusted_input_image_width
     else:
-        smaller_side = output_image_width
-        larger_side = output_image_height
+        smaller_side = adjusted_input_image_width
+        larger_side = adjusted_input_image_height
        
 
     # Crop a reference image:
     crop_image(reference_image_name, larger_side, smaller_side, "Tmp/cropped_image.jpeg")
 
-    grid_coordinates = find_grid_coordinates(raw_sectors_count, table_sectors_count)
+    grid_coordinates = find_grid_coordinates(width_sectors_count, height_sectors_count)
 
     canvas = Image.new('RGB', output_image_size, (250,250,250))
     
@@ -80,13 +92,16 @@ def build_image(
 
     filled_sectors_count = 0
     for coordinate in grid_coordinates:
-    # Count the coordinates where to insert the specific palette photo
-        (left, top, right, bottom) = count_coordinates(coordinate, sector_image_side_size)
+    # Count the coordinates of input sector 
+        (input_left, input_top, input_right, input_bottom) = count_coordinates(coordinate, sector_image_side_size)
+        (output_left, output_top, output_right, output_bottom) = count_coordinates(coordinate, output_image_sector_side_size)
+        
+
 
         # Take part of the reference which corresponds to the sector and save it to a temp image
         # (It will not change original image)
         resized_reference_image = Image.open(r"Tmp/cropped_image.jpeg")
-        reference_img_crop(resized_reference_image, left, top, right, bottom)
+        reference_img_crop(resized_reference_image, input_left, input_top, input_right, input_bottom)
             
         # Find dominant color of sector from step 9
         dominant_color = sector_dominant_color("Tmp/sector_image.jpeg")
@@ -96,7 +111,7 @@ def build_image(
         dom_color_image_name_for_sector = find_name_of_sector_best_match_color(dominant_color, all_rgb_of_img, all_names_of_img)
 
         # Incert the best matching photo into the canvas by its name 
-        best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, sector_image_side_size, canvas, left, top)
+        best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, output_image_sector_side_size, canvas, output_left, output_top)
 
         filled_sectors_count += 1
         print("filled_sectors_count:", filled_sectors_count, "of", len(grid_coordinates))
@@ -159,7 +174,6 @@ def parse_arguments_and_execute_command():
 
     else:
         return 'Unrecognized command'
-
 
 
 # Iiterate over palette photos in a folder_with_palette_photos: 
@@ -249,11 +263,11 @@ def resize_reference_img(img_to_resize, output_image_size, new_img_name):
 
 
 # Find grid coordinates of sectors:
-def find_grid_coordinates(raw_sectors_count, table_sectors_count):
+def find_grid_coordinates(width_sectors_count, height_sectors_count):
     grid_coordinates = []
     
-    for x in range(0, raw_sectors_count):      
-        for y in range(0, table_sectors_count):        
+    for x in range(0, width_sectors_count):      
+        for y in range(0, height_sectors_count):        
             coordinate = []
             coordinate.append(x)
             coordinate.append(y)
@@ -283,6 +297,7 @@ def count_coordinates(i, sector_image_side_size):
     top = coordinate[1]
     right = coordinate[2]
     bottom = coordinate[3]
+
 
     return (left, top, right, bottom)
 
