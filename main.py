@@ -27,7 +27,7 @@ def process_palette(folder_with_palette_photos, sector_image_side_size):
 
 # Build image:
 def build_image(
-        output_image_size,
+        output_image_sector_side_size,
         sector_image_side_size,
         reference_image_name,
         folder_with_palette_photos,
@@ -38,26 +38,13 @@ def build_image(
     # 3. new output image side size
     input_image_size =  Image.open(reference_image_name).size  #width, height 
     input_image_width = input_image_size[0]
-    input_image_height = input_image_size[1]
-
-    output_image_width = output_image_size[0]
-    output_image_height = output_image_size[1]
-
-    output_to_input_sector_ratio = output_image_width / input_image_width
-    print("!!!!!output_to_input_sector_ratio", output_to_input_sector_ratio)
-    print()
-
-    output_image_sector_side_size = int(sector_image_side_size * output_to_input_sector_ratio)
-    print("*****output_image_sector_side_size", output_image_sector_side_size)
-    print()
+    input_image_height = input_image_size[1]   
 
     height_sectors_count = int(input_image_height / sector_image_side_size)
     width_sectors_count =  int(input_image_width / sector_image_side_size)
 
-
     output_image_width =  width_sectors_count * output_image_sector_side_size
     output_image_height = height_sectors_count * output_image_sector_side_size
-
       
     adjusted_input_image_width = width_sectors_count * sector_image_side_size  
     adjusted_input_image_height = height_sectors_count * sector_image_side_size
@@ -147,23 +134,28 @@ def parse_arguments_and_execute_command():
     elif command_name == 'build-image':
         # build-image -i christmas.jpeg -o output.jpeg -oid 1023 681 -sis 15 -fwpf /Users/mkarpava/Documents/3_photos
         print('hi!')
+        parser.add_argument('-fwpf', '--folder-with-palette-photos', dest = 'folder_with_palette_photos', required = True)  
         parser.add_argument('-i', '--filename', required = True) 
         parser.add_argument('-o', '--output-filename', dest = 'output_filename', required = True)         
-        parser.add_argument('-oid', '--output-image-dimensions', dest = 'output_image_size', help = 'width then height', nargs = 2, type = int, required = True) 
-        parser.add_argument('-sis', '--sector-image-size', dest = 'sector_image_side_size', type = int, required = True)  
-        parser.add_argument('-fwpf', '--folder-with-palette-photos', dest = 'folder_with_palette_photos', required = True)  
+        parser.add_argument('-iss', '--input-sector-size', dest = 'sector_image_side_size', type = int, required = True)
+        parser.add_argument('-oss', '--output-sector-size', dest = 'output_sector_size', type = int, required = True)    
+        
+
 
         print("***", sys.argv[2:])
         parse_all_other_arguments = parser.parse_args(sys.argv[2:])
         print("*** ***", parse_all_other_arguments)
         
+        folder_with_palette_photos = parse_all_other_arguments.folder_with_palette_photos   #"/Users/mkarpava/Documents/3_photos"
         reference_image_name = parse_all_other_arguments.filename
         output_filename =  parse_all_other_arguments.output_filename
-        output_image_size = parse_all_other_arguments.output_image_size   #(1023, 681) but here it is an array
+        # output_image_size = parse_all_other_arguments.input-sector-size   #(1023, 681) but here it is an array
         sector_image_side_size = parse_all_other_arguments.sector_image_side_size   # 15 , image side length / sectors count = 1000/50 = 20
-        folder_with_palette_photos = parse_all_other_arguments.folder_with_palette_photos   #"/Users/mkarpava/Documents/3_photos"
-    
-        build_image(output_image_size,
+        output_sector_size = parse_all_other_arguments.output_sector_size
+
+
+
+        build_image(output_sector_size,
                     sector_image_side_size,
                     reference_image_name,
                     folder_with_palette_photos,
