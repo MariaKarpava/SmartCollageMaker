@@ -18,8 +18,8 @@ def main():
     
 
 # Process palette:
-def process_palette(folder_with_palette_photos, sector_image_side_size):
-    (palette_dominant_colors, palette_img_names) = scan_palette(folder_with_palette_photos, sector_image_side_size)
+def process_palette(folder_with_palette_photos):
+    (palette_dominant_colors, palette_img_names) = scan_palette(folder_with_palette_photos)
     save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, 'convert.txt')
     return 
 
@@ -119,15 +119,13 @@ def parse_arguments_and_execute_command():
     command_name = sys.argv[1]
 
     if command_name == 'scan-palette':
-        parser.add_argument('-sis', '--sector-image-size', dest = 'sector_image_side_size', type = int, required = True)  
         parser.add_argument('-fwpf', '--folder-with-palette-photos', dest = 'folder_with_palette_photos', required = True)  
 
         parse_all_other_arguments = parser.parse_args(sys.argv[2:])
 
-        sector_image_side_size = parse_all_other_arguments.sector_image_side_size   # 15 , image side length / sectors count = 1000/50 = 20
         folder_with_palette_photos = parse_all_other_arguments.folder_with_palette_photos   #"/Users/mkarpava/Documents/3_photos"
              
-        process_palette(folder_with_palette_photos, sector_image_side_size)
+        process_palette(folder_with_palette_photos)
 
         return 'scan-palette'
 
@@ -172,7 +170,7 @@ def parse_arguments_and_execute_command():
     # - save file names for every photo in an array
         # - indexes in both arrays corresponds to each other
 
-def scan_palette(folder_with_palette_photos, sector_image_side_size):
+def scan_palette(folder_with_palette_photos):
     palette_dominant_colors = []
     palette_img_names = []
 
@@ -187,9 +185,18 @@ def scan_palette(folder_with_palette_photos, sector_image_side_size):
 
             path_to_image = folder_with_palette_photos + "/" + name
 
-            recize_and_crop_image(path_to_image, sector_image_side_size, "palette_img_for_color_thief.jpeg")
+            original_size = Image.open(path_to_image).size
+            # We don't want to scan too large images, because it takes significant amount of time.
+            # At the same time downsizing an image will not affect it's dominant color significantly.
+            # So we downsize the image if it's larger than 500 to speed up the scanning.
+            square_size = min(original_size[0], original_size[1], 500)
+            
+            recize_and_crop_image(
+                path_to_image,
+                square_size,
+                "Tmp/palette_img_for_color_thief.jpeg")
 
-            color_thief = ColorThief("palette_img_for_color_thief.jpeg")
+            color_thief = ColorThief("Tmp/palette_img_for_color_thief.jpeg")
             dominant_color = color_thief.get_color(quality=1)
             palette_dominant_colors.append(dominant_color)
 
@@ -197,7 +204,6 @@ def scan_palette(folder_with_palette_photos, sector_image_side_size):
         print("scanned:", scanned_count, "of", len(all_files))
 
     return (palette_dominant_colors, palette_img_names)
-
 
 
 # Save all this info into a file  
