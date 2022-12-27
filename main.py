@@ -20,7 +20,7 @@ def main():
 # Process palette:
 def process_palette(folder_with_palette_photos):
     (palette_dominant_colors, palette_img_names) = scan_palette(folder_with_palette_photos)
-    save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, 'convert.txt')
+    save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, 'palette.json')
     return 
 
 
@@ -74,7 +74,7 @@ def build_image(
     
     print("Filling sectors started ...")
 
-    (all_names_of_img, all_rgb_of_img) = load_palette_info('convert.txt') 
+    (all_names_of_img, all_rgb_of_img) = load_palette_info('palette.json') 
 
     filled_sectors_count = 0
     for coordinate in grid_coordinates:
