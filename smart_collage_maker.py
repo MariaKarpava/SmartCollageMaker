@@ -14,28 +14,22 @@ def main():
     parse_arguments_and_execute_command()
     elapsed_seconds = time.time() - start_time
     print("Command finished. Elapsed time (sec):", elapsed_seconds)
-    
 
-# Process palette:
+
 def process_palette(folder_with_palette_photos):
     (palette_dominant_colors, palette_img_names) = scan_palette(folder_with_palette_photos)
-    save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, 'palette.json')
+    save_palette_info_into_json_file(palette_dominant_colors, palette_img_names, 'palette.json')
     return 
 
 
-
-# Build image:
 def build_image(
         output_image_sector_side_size,
         sector_image_side_size,
         reference_image_name,
         folder_with_palette_photos,
         output_filename):
-    # What we calculate based on these data:
-    # 1. reference_image_size
-    # 2. new output image width and heigt 
-    # 3. new output image side size
-    input_image_size =  Image.open(reference_image_name).size  #width, height 
+
+    input_image_size =  Image.open(reference_image_name).size
     input_image_width = input_image_size[0]
     input_image_height = input_image_size[1]   
 
@@ -48,8 +42,7 @@ def build_image(
     adjusted_input_image_width = width_sectors_count * sector_image_side_size  
     adjusted_input_image_height = height_sectors_count * sector_image_side_size
         
-    
-    # setting new output img size   ??????? 
+
     output_image_size = (output_image_width, output_image_height)
     output_image_width = output_image_size[0]
     output_image_height = output_image_size[1]
@@ -63,7 +56,6 @@ def build_image(
         larger_side = adjusted_input_image_height
        
 
-    # Crop a reference image:
     crop_image(reference_image_name, larger_side, smaller_side, "Tmp/cropped_image.jpeg")
 
     grid_coordinates = find_grid_coordinates(width_sectors_count, height_sectors_count)
@@ -77,25 +69,21 @@ def build_image(
 
     filled_sectors_count = 0
     for coordinate in grid_coordinates:
-    # Count the coordinates of input sector 
         (input_left, input_top, input_right, input_bottom) = count_coordinates(coordinate, sector_image_side_size)
         (output_left, output_top, output_right, output_bottom) = count_coordinates(coordinate, output_image_sector_side_size)
-        
 
-
-        # Take part of the reference which corresponds to the sector and save it to a temp image
+        # Take part of the reference which corresponds to the sector and save it to a tmp image
         # (It will not change original image)
         resized_reference_image = Image.open(r"Tmp/cropped_image.jpeg")
         reference_img_crop(resized_reference_image, input_left, input_top, input_right, input_bottom)
-            
-        # Find dominant color of sector from step 9
+
         dominant_color = sector_dominant_color("Tmp/sector_image.jpeg")
 
         # Find best match color for the sector image from the array of palette colors
         # Find the index and then name of the best match color for the sector image (in an array with dominant colors of all palette photos)
         dom_color_image_name_for_sector = find_name_of_sector_best_match_color(dominant_color, all_rgb_of_img, all_names_of_img)
 
-        # Incert the best matching photo into the canvas by its name 
+        # Insert the best matching photo into the canvas by its name 
         best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_name_for_sector, output_image_sector_side_size, canvas, output_left, output_top)
 
         filled_sectors_count += 1
@@ -106,15 +94,21 @@ def build_image(
     print("Output image saved.")
 
 
-
-
-
 # Parse CL arguments and execute command (scan palette or build image).
 # Returns name of the executed command.
 def parse_arguments_and_execute_command():
-    parser = argparse.ArgumentParser(description ='app description.')
+    parser = argparse.ArgumentParser(
+        description = """
+            This apps allows to build a collage of images in a smart way: the collage itself will look like a reference image. 
+            You first need to prepare a large enough 'palette' of images, scan them using 'scan-palette' command, and then 
+            call 'build-image' command, passing palette metadata and a reference image. 
+            The app will split the reference image into sectors and replace each sector with a best matching image from palette. 
+            In result you'll get a new image which looks as close as possible to the reference one but consists from other images. """)
     
-    # python main.py scan-palette -sis 15 -fwpf /Users/mkarpava/Documents/3_photos 
+    if len(sys.argv) < 2 or (len(sys.argv) == 2 and sys.argv[1] == "-h"):
+        print("Please specify a command you wish to run by passing it as an argument: 'scan-palette' or 'build-image'.")
+        return
+
     command_name = sys.argv[1]
 
     if command_name == 'scan-palette':
@@ -122,35 +116,26 @@ def parse_arguments_and_execute_command():
 
         parse_all_other_arguments = parser.parse_args(sys.argv[2:])
 
-        folder_with_palette_photos = parse_all_other_arguments.folder_with_palette_photos   #"/Users/mkarpava/Documents/3_photos"
+        folder_with_palette_photos = parse_all_other_arguments.folder_with_palette_photos
              
         process_palette(folder_with_palette_photos)
 
         return 'scan-palette'
 
     elif command_name == 'build-image':
-        
-        print('hi!')
         parser.add_argument('-fwpf', '--folder-with-palette-photos', dest = 'folder_with_palette_photos', required = True)  
         parser.add_argument('-i', '--filename', required = True) 
         parser.add_argument('-o', '--output-filename', dest = 'output_filename', required = True)         
         parser.add_argument('-iss', '--input-sector-size', dest = 'sector_image_side_size', type = int, required = True)
         parser.add_argument('-oss', '--output-sector-size', dest = 'output_sector_size', type = int, required = True)    
         
-
-
-        print("***", sys.argv[2:])
         parse_all_other_arguments = parser.parse_args(sys.argv[2:])
-        print("*** ***", parse_all_other_arguments)
         
-        folder_with_palette_photos = parse_all_other_arguments.folder_with_palette_photos   #"/Users/mkarpava/Documents/3_photos"
+        folder_with_palette_photos = parse_all_other_arguments.folder_with_palette_photos
         reference_image_name = parse_all_other_arguments.filename
         output_filename =  parse_all_other_arguments.output_filename
-        # output_image_size = parse_all_other_arguments.input-sector-size   #(1023, 681) but here it is an array
-        sector_image_side_size = parse_all_other_arguments.sector_image_side_size   # 15 , image side length / sectors count = 1000/50 = 20
+        sector_image_side_size = parse_all_other_arguments.sector_image_side_size
         output_sector_size = parse_all_other_arguments.output_sector_size
-
-
 
         build_image(output_sector_size,
                     sector_image_side_size,
@@ -163,11 +148,6 @@ def parse_arguments_and_execute_command():
     else:
         return 'Unrecognized command'
 
-
-# Iiterate over palette photos in a folder_with_palette_photos: 
-    # - save dominant colors of every photo in an array 
-    # - save file names for every photo in an array
-        # - indexes in both arrays corresponds to each other
 
 def scan_palette(folder_with_palette_photos):
     palette_dominant_colors = []
@@ -205,27 +185,20 @@ def scan_palette(folder_with_palette_photos):
     return (palette_dominant_colors, palette_img_names)
 
 
-# Save all this info into a file  
-def save_palette_info_into_txt_file(palette_dominant_colors, palette_img_names, output_txt_file_name):
+def save_palette_info_into_json_file(palette_dominant_colors, palette_img_names, output_file_name):
     palette_image_names_and_dom_colors = dict(zip(palette_img_names, palette_dominant_colors))
 
-    with open(output_txt_file_name, 'w') as convert_file:
+    with open(output_file_name, 'w') as convert_file:
         convert_file.write(json.dumps(palette_image_names_and_dom_colors))
 
 
-
-
-
 def load_palette_info(input_file):
-    # Reading the data from the file 
     with open(input_file) as f:
         data = f.read()
-        
-    # reconstructing the data as a dictionary
+
     fromJS_palette_image_names_and_dom_colors = json.loads(data) 
 
     # Reconstructing the data into arrays 
-    # TODO: I already have this arrays: palette_dominant_colors, palette_img_names
     all_names_of_img = [] 
     all_rgb_of_img = [] 
 
@@ -236,20 +209,16 @@ def load_palette_info(input_file):
     return (all_names_of_img, all_rgb_of_img)
 
 
-
-
-
 def closest_color(rgb, all_rgb_of_img):
     r, g, b = rgb
     color_diffs = []
     for color in all_rgb_of_img:
         cr, cg, cb = color
+        # Calculate 3D Euclidean distance to compare colors.
         color_diff = sqrt((r - cr)**2 + (g - cg)**2 + (b - cb)**2)
         color_diffs.append((color_diff, color))
 
     return min(color_diffs)[1]
-
-
 
 
 def resize_reference_img(img_to_resize, output_image_size, new_img_name):
@@ -258,7 +227,6 @@ def resize_reference_img(img_to_resize, output_image_size, new_img_name):
     Image.open(new_img_name)
 
 
-# Find grid coordinates of sectors:
 def find_grid_coordinates(width_sectors_count, height_sectors_count):
     grid_coordinates = []
     
@@ -269,13 +237,9 @@ def find_grid_coordinates(width_sectors_count, height_sectors_count):
             coordinate.append(y)
             grid_coordinates.append(coordinate)
 
-    # print("greed coordinates", grid_coordinates)
     return grid_coordinates
 
 
-
-
-# How to rename i, a, b?
 def count_coordinates(i, sector_image_side_size):
     coordinate = []
 
@@ -313,7 +277,6 @@ def sector_dominant_color(img_name):
     return dominant_color
 
 
-
 def find_name_of_sector_best_match_color(dominant_color, all_rgb_of_img, all_names_of_img):
     best_match_color = closest_color(dominant_color, all_rgb_of_img)
     
@@ -340,8 +303,5 @@ def best_matching_photo_into_canvas(folder_with_palette_photos, dom_color_image_
     return 
 
 
-
 if __name__ == "__main__":
     main()
-
-
