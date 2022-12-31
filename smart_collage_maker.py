@@ -4,8 +4,7 @@ from math import sqrt
 import time
 import os
 import json
-from resizing import * 
-from crop_image_from_center import * 
+from helpers import *
 import argparse
 import sys
 
@@ -130,7 +129,7 @@ def parse_arguments_and_execute_command():
         return 'scan-palette'
 
     elif command_name == 'build-image':
-        # build-image -i christmas.jpeg -o output.jpeg -oid 1023 681 -sis 15 -fwpf /Users/mkarpava/Documents/3_photos
+        
         print('hi!')
         parser.add_argument('-fwpf', '--folder-with-palette-photos', dest = 'folder_with_palette_photos', required = True)  
         parser.add_argument('-i', '--filename', required = True) 
