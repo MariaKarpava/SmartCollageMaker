@@ -4,7 +4,7 @@
 
 **Smart Collage Maker** is a command line tool that allows you to combine your favourite photos into a work of art. You can create gorgeous collages, ready to print to canvas, share on social media and use as personalized photo gifts to loved ones.
 
-This is also a Final Project for the [Harvard CS50 course](https://cs50.harvard.edu/x/2022).
+This is also a Final Project for the [Harvard CS50x course](https://cs50.harvard.edu/x/2022).
 
 The idea is:
   - You prepare a "palette" of images, which is large and diverse enough.
@@ -14,7 +14,7 @@ The idea is:
 
 ## Demo
 
-Video overview: <TODO: insert url>
+Video overview: https://youtu.be/6Ic8RDP9hZs
 
 ## How to use?
 
